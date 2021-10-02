@@ -6,6 +6,10 @@ const {MessageEmbed} = require("discord.js");
 // --- node-ical
 const ical = require("node-ical");
 
+// --- Project modules
+const dl = require("../../utils/download");
+const prettynb = require("../../utils/pretty-numbers");
+
 // --- URLs for the ICS files
 const icsUrls = require("../../ics.json");
 
@@ -13,20 +17,6 @@ function addDays(date, days) {
     let result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
-}
-
-function sendDay(ev, followUp, interaction) {
-    const embed = new MessageEmbed()
-        .setTitle(ev.summary)
-        .addField("Start hour", `${ev.start.getHours()}:${ev.start.getMinutes()}`, true)
-        .addField("End hour", `${ev.end.getHours()}:${ev.end.getMinutes()}`, true)
-        .addField("Location", ev.location, true);
-
-    if(followUp) {
-        interaction.editReply({embeds: [embed]});
-    } else {
-        interaction.channel.send({embeds: [embed]});
-    }
 }
 
 function buildAndSendForDay(day, calName, interaction) {
@@ -39,35 +29,63 @@ function buildAndSendForDay(day, calName, interaction) {
         console.log(day);
         console.log(nextDay);
 
-        ical.fromURL(url, {}, function(err, cal) {
-            let found = false;
+        dl.download(url, (data) => {
+            const cal = ical.sync.parseICS(data);
+
+            let events = [];
 
             for(let k in cal) {
                 if(cal.hasOwnProperty(k)) {
                     const ev = cal[k];
-
+    
                     if(day <= ev.start && ev.end < nextDay) {
-                        found = true;
-
                         console.log(ev);
-
-                        sendDay(ev, !found, interaction);
+    
+                        events.push(ev);
                     }
                 }
             }
 
-            if(!found) {
-                const embed = new MessageEmbed()
-                    .setTitle(day.toLocaleDateString())
-                    .setColor("#0099ff")
-                    .setTimestamp()
-                    .setDescription("Nothing is scheduled for this day.");
+            const embed = new MessageEmbed()
+                .setTitle(day.toLocaleDateString())
+                .setColor("#0099ff")
+                .setTimestamp();
+    
+            if(events.length != 0) {
+                events.sort((first, second) => {
+                    if(first.start < second.start) {
+                        return -1;
+                    } else if (first.start > second.start) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                });
 
-                interaction.editReply({embeds: [embed]});
+                for(let i = 0; i < events.length; i++) {
+                    const ev = events[i];
+
+                    embed.addField(ev.summary.substr(0, 255), `__Start :__ ${ev.start.getHours()}:${prettynb.pretty(ev.start.getMinutes())}\n__End :__ ${ev.end.getHours()}:${prettynb.pretty(ev.end.getMinutes())}\n__Location :__ ${ev.location}`);
+                }
+            } else {
+                embed.setDescription("Nothing is scheduled for this day.");
             }
+
+            interaction.editReply({embeds: [embed]});
+        }, (err) => {
+            console.error(err);
+
+            const embed = new MessageEmbed()
+                .setTitle("An error occured")
+                .setColor("#0099ff")
+                .setDescription("Failed to download the ICS file. Maybe the calendar server is offline ?");
+
+            interaction.editReply({embeds: [embed]});
         });
     } else {
-        embed.setTitle("Unknown calendar.")
+        const embed = new MessageEmbed()
+            .setTitle("Unknown calendar.")
+            .setColor("#0099ff")
             .setDescription("Check your command and try again.");
 
         interaction.editReply({embeds: [embed]});
