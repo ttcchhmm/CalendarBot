@@ -14,7 +14,6 @@ const nextEvent = new SlashCommandBuilder().setName("nextevent")
                                         .setDescription("Display the next event in a calendar")
                                         .addStringOption(option => option.setName("calendar").setDescription("Calendar to check").setRequired(true));
 
-                                        /*
 const seeDay = new SlashCommandBuilder().setName("seeday")
                                         .setDescription("Display the calendar")
                                         .addSubcommand(subcommand =>
@@ -34,8 +33,7 @@ const seeDay = new SlashCommandBuilder().setName("seeday")
                                             .addIntegerOption(option => option.setName("month").setDescription("The month of the year").setRequired(true))
                                             .addIntegerOption(option => option.setName("year").setDescription("The year").setRequired(true)));
 
-                                            */
-const commands = [nextEvent/*, seeDay*/];
+const commands = [nextEvent, seeDay];
 
 // Register commands to the Discord API
 exports.registerCommands = async function(client, token, clientId) {
@@ -65,11 +63,9 @@ exports.setupExecution = function (client) {
                 case "nextevent":
                     cmdNextEvent.exec(interaction);
                     break;
-                /*
                 case "seeday":
                     cmdSeeDay.exec(interaction);
                     break;
-                */
             }
         }
     });
