@@ -13,21 +13,20 @@ const prettynb = require("../../utils/pretty-numbers");
 // --- URLs for the ICS files
 const icsUrls = require("../../ics.json");
 
+// Add a number of days to a date
 function addDays(date, days) {
     let result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
 }
 
+// Build a message for a day and send it
 function buildAndSendForDay(day, calName, interaction) {
     const url = icsUrls[calName];
 
-    if(url != undefined) {
+    if(url != undefined) { // If the calendar exists
         day.setHours(0, 0, 0, 0);
-        const nextDay = addDays(day, 1);
-
-        console.log(day);
-        console.log(nextDay);
+        const nextDay = addDays(day, 1); // The next day
 
         dl.download(url, (data) => {
             const cal = ical.sync.parseICS(data);
@@ -39,8 +38,6 @@ function buildAndSendForDay(day, calName, interaction) {
                     const ev = cal[k];
     
                     if(day <= ev.start && ev.end < nextDay) {
-                        console.log(ev);
-    
                         events.push(ev);
                     }
                 }
@@ -52,6 +49,7 @@ function buildAndSendForDay(day, calName, interaction) {
                 .setTimestamp();
     
             if(events.length != 0) {
+                // Sort the events from the nearest to the furtherest
                 events.sort((first, second) => {
                     if(first.start < second.start) {
                         return -1;
@@ -65,6 +63,7 @@ function buildAndSendForDay(day, calName, interaction) {
                 for(let i = 0; i < events.length; i++) {
                     const ev = events[i];
 
+                    // Add a field with : name (within Discord API limits) / start time / end time / location
                     embed.addField(ev.summary.substr(0, 255), `__Start :__ ${ev.start.getHours()}:${prettynb.pretty(ev.start.getMinutes())}\n__End :__ ${ev.end.getHours()}:${prettynb.pretty(ev.end.getMinutes())}\n__Location :__ ${ev.location}`);
                 }
             } else {
@@ -92,6 +91,7 @@ function buildAndSendForDay(day, calName, interaction) {
     }
 }
 
+// Function to run when the command is executed
 exports.exec = async function(interaction) {
     await interaction.deferReply();
 
