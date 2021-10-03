@@ -6,6 +6,9 @@ const {MessageEmbed} = require("discord.js");
 // --- node-ical
 const ical = require("node-ical");
 
+// --- Project modules
+const prettynb = require("../../utils/pretty-numbers");
+
 // --- URLs for the ICS files
 const icsUrls = require("../../ics.json");
 
@@ -36,8 +39,8 @@ exports.exec = async function(interaction) {
         try {
             embed.setTitle(closestEvent.summary)
                 .addField("Day", closestEvent.start.toLocaleDateString(), true)
-                .addField("Start hour", `${closestEvent.start.getHours()}:${closestEvent.start.getMinutes()}`, true)
-                .addField("End hour", `${closestEvent.end.getHours()}:${closestEvent.end.getMinutes()}`, true)
+                .addField("Start hour", `${closestEvent.start.getHours()}:${prettynb.pretty(closestEvent.start.getMinutes())}`, true)
+                .addField("End hour", `${closestEvent.end.getHours()}:${prettynb.pretty(closestEvent.end.getMinutes())}`, true)
                 .addField("Location", closestEvent.location, true);
         } catch (err) {
             console.error(err);
