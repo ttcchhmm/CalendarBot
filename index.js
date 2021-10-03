@@ -1,6 +1,6 @@
 'use-strict';
 
-// --- JSON files ---
+// --- JSON files
 const config = require("./config.json");
 
 // --- Discord.JS
