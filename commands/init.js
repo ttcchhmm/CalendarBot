@@ -8,6 +8,7 @@ const {Routes} = require("discord-api-types/v9");
 // --- Slash commands implementation
 const cmdNextEvent = require("./impl/nextevent");
 const cmdSeeDay = require("./impl/seeday");
+const cmdFreeTime = require("./impl/freetime");
 
 // --- Commands definition
 const nextEvent = new SlashCommandBuilder().setName("nextevent")
@@ -33,7 +34,14 @@ const seeDay = new SlashCommandBuilder().setName("seeday")
                                             .addIntegerOption(option => option.setName("month").setDescription("The month of the year").setRequired(true))
                                             .addIntegerOption(option => option.setName("year").setDescription("The year").setRequired(true)));
 
-const commands = [nextEvent, seeDay];
+const freeTime = new SlashCommandBuilder().setName("freetime")
+                                            .setDescription("See the next common free time for today between multiple calendars")
+                                            .addStringOption(option => option.setName("first").setDescription("First calendar").setRequired(true))
+                                            .addStringOption(option => option.setName("second").setDescription("Second calendar").setRequired(true))
+                                            .addStringOption(option => option.setName("third").setDescription("Third calendar").setRequired(false))
+                                            .addStringOption(option => option.setName("fourth").setDescription("Fourth calendar").setRequired(false));
+
+const commands = [nextEvent, seeDay, freeTime];
 
 // Register commands to the Discord API
 exports.registerCommands = async function(client, token, clientId) {
@@ -65,6 +73,9 @@ exports.setupExecution = function (client) {
                     break;
                 case "seeday":
                     cmdSeeDay.exec(interaction);
+                    break;
+                case "freetime":
+                    cmdFreeTime.exec(interaction);
                     break;
             }
         }
