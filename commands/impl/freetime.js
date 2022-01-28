@@ -15,6 +15,14 @@ const ical = require("node-ical");
 // --- ICS urls
 const icsUrls = require("../../ics.json");
 
+// --- Project modules
+const sorting = require("../../utils/sorting");
+
+function TimeInterval(start, end) {
+    this.start = start;
+    this.end = end;
+}
+
 exports.exec = async function (interaction) {
     await interaction.deferReply();
 
@@ -77,13 +85,7 @@ exports.exec = async function (interaction) {
         const max = new Date("2021-10-04"); // TODO debug only
         max.setHours(dayEndHour, dayEndMinute, 0);
 
-        let busy = Array.from(Array(dayEndHour - dayStartHour), () => new Array(60));
-
-        for(let h = 0; h < busy.length; h++) {
-            for(let m = 0; busy[h].length; m++) {
-                busy[h][m] = false;
-            }
-        }
+        let events = [];
 
         for(let i = 0; i < icsText.length; i++) {
             const cal = ical.sync.parseICS(icsText[i]);
@@ -92,29 +94,46 @@ exports.exec = async function (interaction) {
                 if(cal.hasOwnProperty(k)) {
                     const ev = cal[k];
 
-                    for(let hour = ev.start.getHours() - 1; hour < ev.end.getHours(); hour++) {
-                        if(hour == ev.end.getHours() - 1) {
-                            for(let minutes = 0; minutes < ev.end.getMinutes(); minutes++) {
-                                busy[hour][minutes] = true;
-                            }
-                        } else if (hour == ev.start.getHours() && hour != ev.end.getHours() - 1) {
-                            for(let minutes = ev.start.getMinutes(); minutes < 60; minutes++) {
-                                busy[hour][minutes] = true;
-                            }
-                        } else if (hour == ev.start.getHours() && hour == ev.end.getHours() - 1) {
-                            for(let minutes = ev.start.getMinutes(); minutes < ev.end.getMinutes(); minutes++) {
-                                busy[hour][minutes] = true;
-                            }
-                        } else {
-                            for(let minutes = 0; minutes < 60; minutes++) {
-                                busy[hour][minutes] = true;
-                            }
-                        }
+                    if(ev.start >= min && ev.end <= max) {
+                        events.push(ev);
                     }
                 }
             }
         }
 
-        // TODO fix hour indexes (ex: with dayStartHour = 8, 8h00 = [0][0])
+        const embed = new MessageEmbed()
+                        .setTitle(min.toLocaleDateString())
+                        .setColor("#0099ff");
+
+        if(events.length == 0) {
+            embed.setDescription("Everytime is fine.");
+        } else {
+            events.sort(sorting.eventSort);
+
+            if(events.length > 1) {
+                let busy = [];
+                let currentStart;
+
+                for(let i = 1; i < events.length; i++) {
+                    const prev = events[i-1];
+                    const current = events[i];
+
+                    if(currentStart == undefined) {
+                        if(prev.start < current.start) {
+                            currentStart = prev.start;
+                        } else {
+                            currentStart = current.start
+                        }
+                    } else if(prev.end < current.start) {
+                        busy.push(new TimeInterval(currentStart, prev.end));
+                        currentStart = undefined;
+                    }
+                }
+
+                console.log(busy);
+            }
+        }
+
+        interaction.editReply({embeds: [embed]});
     }
 }
