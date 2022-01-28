@@ -9,6 +9,7 @@ const ical = require("node-ical");
 // --- Project modules
 const dl = require("../../utils/download");
 const prettynb = require("../../utils/pretty-numbers");
+const sorting = require("../../utils/sorting");
 
 // --- URLs for the ICS files
 const icsUrls = require("../../ics.json");
@@ -50,15 +51,7 @@ function buildAndSendForDay(day, calName, interaction) {
     
             if(events.length != 0) {
                 // Sort the events from the nearest to the furtherest
-                events.sort((first, second) => {
-                    if(first.start < second.start) {
-                        return -1;
-                    } else if (first.start > second.start) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                });
+                events.sort(sorting.eventSort);
 
                 for(let i = 0; i < events.length; i++) {
                     const ev = events[i];
