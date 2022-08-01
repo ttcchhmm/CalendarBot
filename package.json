@@ -6,7 +6,7 @@
     "license": "MIT",
     "dependencies": {
         "discord-api-types": "^0.26.1",
-        "@discordjs/rest": "^0.3.0",
+        "@discordjs/rest": "^1.0.1",
         "discord.js": "^13.6.0",
         "node-ical": "0.14.1"
     }
